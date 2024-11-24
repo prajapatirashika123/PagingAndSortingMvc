@@ -15,15 +15,41 @@ namespace PagingAndSorting.Controllers
             _context = context;
         }
 
-        public IActionResult Index(int? page)
+        public IActionResult Index(string sortOrder, int? page)
         {
-            int pageNumber = page ?? 1;  // Default to the first page if not specified
-            int pageSize = 10;          // Number of items per page
+            // Sorting parameters
+            ViewBag.NameSortParam = string.IsNullOrEmpty(sortOrder) ? "name_desc" : "";
+            ViewBag.SalarySortParam = sortOrder == "Salary" ? "salary_desc" : "Salary";
 
-            // Fetch data and paginate
-            var products = _context.Employees.OrderBy(p => p.Name).ToPagedList(pageNumber, pageSize);
+            // Fetch data
+            var employees = from e in _context.Employees select e;
 
-            return View(products);
+            // Sorting logic
+            switch (sortOrder)
+            {
+                case "name_desc":
+                    employees = employees.OrderByDescending(e => e.Name);
+                    break;
+
+                case "Salary":
+                    employees = employees.OrderBy(e => e.Salary);
+                    break;
+
+                case "salary_desc":
+                    employees = employees.OrderByDescending(e => e.Salary);
+                    break;
+
+                default:
+                    employees = employees.OrderBy(e => e.Name);
+                    break;
+            }
+
+            // Pagination
+            int pageNumber = page ?? 1;
+            int pageSize = 10;
+            var pagedList = employees.ToPagedList(pageNumber, pageSize);
+
+            return View(pagedList);
         }
     }
 }
